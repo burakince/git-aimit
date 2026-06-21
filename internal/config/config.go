@@ -15,8 +15,9 @@ type OllamaConfig struct {
 }
 
 type Config struct {
-	Provider string       `json:"provider"  mapstructure:"provider"`
-	Ollama   OllamaConfig `json:"ollama"    mapstructure:"ollama"`
+	Provider  string       `json:"provider"   mapstructure:"provider"`
+	AutoStage bool         `json:"auto_stage" mapstructure:"auto_stage"`
+	Ollama    OllamaConfig `json:"ollama"     mapstructure:"ollama"`
 }
 
 // ConfigPath returns the absolute path to the config file.

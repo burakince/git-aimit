@@ -37,6 +37,18 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("not inside a Git repository")
 	}
 
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	if cfg.AutoStage {
+		fmt.Println("Auto-staging all changes...")
+		if err := git.StageAll(); err != nil {
+			return err
+		}
+	}
+
 	diff, err := git.StagedDiff()
 	if err != nil {
 		return err
@@ -44,11 +56,6 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	if diff == "" {
 		fmt.Println("No staged changes found. Stage your changes with `git add` first.")
 		return nil
-	}
-
-	cfg, err := config.Load()
-	if err != nil {
-		return err
 	}
 
 	var provider llm.Provider

@@ -54,12 +54,16 @@ The tool checks whether Ollama is reachable and saves the config to
 ```json
 {
   "provider": "ollama",
+  "auto_stage": false,
   "ollama": {
     "base_url": "http://localhost:11434",
     "model": "llama3"
   }
 }
 ```
+
+Set `auto_stage` to `true` to have `git aimit` run `git add -A` automatically
+before generating the message, so you don't need to stage changes manually.
 
 ---
 

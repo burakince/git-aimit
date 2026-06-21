@@ -12,7 +12,8 @@ func TestSaveAndLoad(t *testing.T) {
 	path := filepath.Join(dir, "config.json")
 
 	want := &Config{
-		Provider: "ollama",
+		Provider:  "ollama",
+		AutoStage: true,
 		Ollama: OllamaConfig{
 			BaseURL: "http://localhost:11434",
 			Model:   "llama3",
@@ -30,6 +31,9 @@ func TestSaveAndLoad(t *testing.T) {
 
 	if got.Provider != want.Provider {
 		t.Errorf("Provider: got %q, want %q", got.Provider, want.Provider)
+	}
+	if got.AutoStage != want.AutoStage {
+		t.Errorf("AutoStage: got %v, want %v", got.AutoStage, want.AutoStage)
 	}
 	if got.Ollama.BaseURL != want.Ollama.BaseURL {
 		t.Errorf("Ollama.BaseURL: got %q, want %q", got.Ollama.BaseURL, want.Ollama.BaseURL)

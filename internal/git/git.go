@@ -20,6 +20,15 @@ func StagedDiff() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// StageAll stages all changes in the working tree (equivalent to git add -A).
+func StageAll() error {
+	out, err := exec.Command("git", "add", "-A").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("git add -A failed: %s", strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
 // Commit creates a commit with the given message.
 func Commit(message string) error {
 	cmd := exec.Command("git", "commit", "-m", message)

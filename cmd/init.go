@@ -29,11 +29,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	baseURL := prompt(reader, "Ollama base URL", "http://localhost:11434")
 	model := prompt(reader, "Model name", "llama3")
+	autoStage := promptBool(reader, "Auto-stage all changes before generating message", false)
 
 	checkConnectivity(baseURL)
 
 	cfg := &config.Config{
-		Provider: "ollama",
+		Provider:  "ollama",
+		AutoStage: autoStage,
 		Ollama: config.OllamaConfig{
 			BaseURL: baseURL,
 			Model:   model,
@@ -44,7 +46,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("saving config: %w", err)
 	}
 
-	fmt.Println("Configuration saved. Run `git aimit` in a repository with staged changes.")
+	if autoStage {
+		fmt.Println("Configuration saved. Run `git aimit` to stage everything, generate a message, and commit.")
+	} else {
+		fmt.Println("Configuration saved. Run `git aimit` in a repository with staged changes.")
+	}
 	return nil
 }
 
@@ -56,6 +62,20 @@ func prompt(r *bufio.Reader, label, defaultVal string) string {
 		return defaultVal
 	}
 	return line
+}
+
+func promptBool(r *bufio.Reader, label string, defaultVal bool) bool {
+	defaultStr := "N"
+	if defaultVal {
+		defaultStr = "y"
+	}
+	fmt.Printf("%s [%s]: ", label, defaultStr)
+	line, _ := r.ReadString('\n')
+	line = strings.TrimSpace(strings.ToLower(line))
+	if line == "" {
+		return defaultVal
+	}
+	return line == "y" || line == "yes"
 }
 
 func checkConnectivity(baseURL string) {
