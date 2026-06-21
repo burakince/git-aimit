@@ -91,6 +91,57 @@ Committed successfully.
 
 ---
 
+## Development
+
+**Prerequisites:** Go 1.21+
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/burakince/git-aimit.git
+cd git-aimit
+go mod tidy
+
+# Build
+go build -o git-aimit .
+
+# Run all tests
+go test ./...
+
+# Run a specific test
+go test ./internal/config/... -run TestSaveAndLoad
+go test ./internal/llm/ollama/... -run TestGenerateCommitMessage
+
+# Vet
+go vet ./...
+```
+
+Unit tests use only the standard library (`testing`, `net/http/httptest`) — no
+external test dependencies or running Ollama instance required.
+
+### Evals
+
+Evals test actual model output quality against a live Ollama instance. They are
+excluded from `go test ./...` and must be opted into explicitly:
+
+```bash
+go test -tags evals -v ./evals/
+```
+
+Override the endpoint or model with environment variables:
+
+```bash
+OLLAMA_BASE_URL=http://localhost:11434 OLLAMA_MODEL=llama3 \
+  go test -tags evals -v ./evals/
+```
+
+Each eval runs a fixture diff through the real model and checks the result
+against named criteria (Conventional Commits format, 72-character subject line,
+body paragraph present for complex multi-package diffs, no code fences). Evals
+skip automatically when Ollama is not reachable, so they are safe to run in any
+environment and will simply report `SKIP` when the model is unavailable.
+
+---
+
 ## Adding a new LLM provider
 
 1. Create a new package under `internal/llm/`, e.g. `internal/llm/openai/`.

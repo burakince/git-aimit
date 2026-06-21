@@ -15,8 +15,22 @@ func TestBuildPrompt(t *testing.T) {
 	if !strings.Contains(prompt, diff) {
 		t.Error("prompt should contain the raw diff")
 	}
-	if !strings.HasPrefix(prompt, "Generate a commit message") {
-		t.Errorf("prompt should start with expected prefix, got: %q", prompt[:50])
+	if !strings.Contains(prompt, "bounded contexts") {
+		t.Error("prompt should ask the model to identify bounded contexts")
+	}
+}
+
+func TestSystemPromptRequiresBody(t *testing.T) {
+	checks := []string{
+		"bounded context",
+		"WHY",
+		"motivation",
+		"required",
+	}
+	for _, phrase := range checks {
+		if !strings.Contains(systemPrompt, phrase) {
+			t.Errorf("system prompt should contain %q to guide body generation", phrase)
+		}
 	}
 }
 
@@ -51,7 +65,9 @@ func TestGenerateCommitMessage(t *testing.T) {
 
 func TestGenerateCommitMessageServerError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error":"internal server error"}`))
 	}))
 	defer srv.Close()
 
@@ -60,8 +76,26 @@ func TestGenerateCommitMessageServerError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 500 response, got nil")
 	}
-	if !strings.Contains(err.Error(), "500") {
-		t.Errorf("error should mention status 500, got: %v", err)
+	if !strings.Contains(err.Error(), "internal server error") {
+		t.Errorf("error should include Ollama's message, got: %v", err)
+	}
+}
+
+func TestGenerateCommitMessageModelNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"model 'llama3' not found, try pulling it first"}`))
+	}))
+	defer srv.Close()
+
+	client := New(srv.URL, "llama3")
+	_, err := client.GenerateCommitMessage(context.Background(), "some diff")
+	if err == nil {
+		t.Fatal("expected error for 404 response, got nil")
+	}
+	if !strings.Contains(err.Error(), "ollama pull") {
+		t.Errorf("error should suggest 'ollama pull', got: %v", err)
 	}
 }
 
