@@ -1,8 +1,8 @@
 class GitAimit < Formula
   desc "AI-powered Git commit message generator using local Ollama models"
   homepage "https://github.com/burakince/git-aimit"
-  url "https://github.com/burakince/git-aimit/archive/refs/tags/v0.0.1.tar.gz"
-  sha256 "b813a57487c19c20517450d17efecc2ef0776337c7ac363142a7767c8fd3f84f"
+  url "https://github.com/burakince/git-aimit/archive/refs/tags/v0.0.2.tar.gz"
+  sha256 "8e30ec9d12b0640bcf30f4c0f18c61d37f844d31a3a3f818ec4bb95f7e44456e"
   license "MIT"
   head "https://github.com/burakince/git-aimit.git", branch: "main"
 
