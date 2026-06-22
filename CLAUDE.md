@@ -33,15 +33,25 @@ OLLAMA_BASE_URL=http://localhost:11434 OLLAMA_MODEL=llama3 go test -tags evals -
 `git-aimit` is a Cobra CLI with two commands: the root command (generate + commit) and `init` (interactive config setup). It is named `git-aimit` so Git exposes it as `git aimit`.
 
 **Request flow (root command):**
-1. `internal/git` — checks repo, gets `git diff --cached`
-2. `internal/config` — loads `~/.config/git-aimit/config.json`
-3. `internal/llm` — calls the configured provider, prints the message, asks for confirmation
-4. `internal/git` — runs `git commit -m <message>` if confirmed
+1. `internal/git` — checks the working directory is inside a Git repository
+2. `internal/config` — loads `~/.config/git-aimit/config.json` (errors here before touching git)
+3. `internal/git` — if `cfg.AutoStage` is true, runs `git add -A` before reading the diff
+4. `internal/git` — runs `git diff --cached`; exits cleanly if nothing is staged
+5. `internal/llm` — calls the configured provider, prints the message, asks for confirmation
+6. `internal/git` — runs `git commit -m <message>` if confirmed
 
 **Provider interface (`internal/llm/provider.go`)** is the extension point for new LLM backends. The root command (`cmd/root.go`) holds a `llm.Provider` variable; adding a new backend only requires a new package under `internal/llm/<name>/` and a new `case` in the `switch cfg.Provider` block.
 
-**Config (`internal/config/config.go`):** viper reads the JSON file; `encoding/json` writes it. `LoadFrom(path)` and `SaveTo(path, cfg)` accept explicit paths so tests use temp directories instead of `~/.config`. The Ollama client (`internal/llm/ollama/ollama.go`) streams NDJSON from `POST /api/generate`, accumulating `response` fields until `done: true`.
+**Config (`internal/config/config.go`):** viper reads the JSON file; `encoding/json` writes it. `LoadFrom(path)` and `SaveTo(path, cfg)` accept explicit paths so tests use temp directories instead of `~/.config`. Fields: `provider`, `auto_stage` (bool, default false), `ollama.base_url`, `ollama.model`.
+
+**Ollama client (`internal/llm/ollama/ollama.go`):** streams NDJSON from `POST /api/generate`, accumulating `response` tokens until `done: true`. `BuildPrompt` is a pure exported function for testability. `ollamaError` reads the JSON error body and surfaces actionable messages (e.g. suggests `ollama pull` on 404). The system prompt requires a body paragraph when the diff touches multiple bounded contexts.
 
 **Testing approach:** Unit tests use `net/http/httptest` — no mocking libraries. `BuildPrompt` is a pure exported function specifically to enable network-free unit tests.
 
 **Evals (`evals/evals_test.go`):** Opt-in tests behind `//go:build evals` that run the actual model against fixture diffs and assert output quality via a `criterion` slice. Each criterion is a named predicate over the raw message string. Two fixtures exist: `simpleDiff` (single-file, format check only) and `complexDiff` (three packages, also asserts a body paragraph is present). Add new criteria or fixtures freely — evals are deliberately flexible, not exhaustive.
+
+**CI/Release (`.github/workflows/`):**
+- `ci.yml` — runs `go vet` and `go test ./...` on every push and PR to `main`
+- `release.yml` — triggered by `v*` tags; cross-compiles for 6 targets (Linux/Windows/macOS × amd64/arm64) with `CGO_ENABLED=0`, publishes binaries as GitHub release assets, then updates `Formula/git-aimit.rb` with the new tarball URL and SHA256 and commits back to `main`
+
+**Homebrew (`Formula/git-aimit.rb`):** formula for the self-hosted tap. Users install with `brew tap burakince/git-aimit https://github.com/burakince/git-aimit && brew install git-aimit`. The formula builds from the source tarball using `go build`; the `url` and `sha256` lines are patched automatically by the release workflow on each new tag.

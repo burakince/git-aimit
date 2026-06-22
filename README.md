@@ -9,11 +9,13 @@ as `git-aimit`, Git exposes it as `git aimit`.
 
 ## What it does
 
-1. Reads `git diff --cached` (staged changes only).
-2. Sends the diff to a locally running Ollama model with a Conventional Commits
-   prompt.
-3. Prints the generated message for you to review.
-4. Asks for confirmation — if you say **y**, it runs `git commit -m <message>`.
+1. Optionally runs `git add -A` for you when `auto_stage` is enabled in config.
+2. Reads `git diff --cached` (staged changes only).
+3. Sends the diff to a locally running Ollama model with a Conventional Commits
+   prompt. Includes an explanatory body paragraph when the diff spans multiple
+   packages or bounded contexts.
+4. Prints the generated message for you to review.
+5. Asks for confirmation — if you say **y**, it runs `git commit -m <message>`.
 
 ---
 
@@ -25,6 +27,22 @@ as `git-aimit`, Git exposes it as `git aimit`.
 brew tap burakince/git-aimit https://github.com/burakince/git-aimit
 brew install git-aimit
 ```
+
+### Pre-built binaries
+
+Download the binary for your platform from the
+[latest release](https://github.com/burakince/git-aimit/releases/latest),
+make it executable, and place it somewhere on your `PATH`:
+
+```bash
+# Example for macOS Apple Silicon
+curl -L https://github.com/burakince/git-aimit/releases/latest/download/git-aimit-darwin-arm64 \
+  -o /usr/local/bin/git-aimit
+chmod +x /usr/local/bin/git-aimit
+```
+
+Available targets: `linux-amd64`, `linux-arm64`, `darwin-amd64`, `darwin-arm64`,
+`windows-amd64.exe`, `windows-arm64.exe`.
 
 ### Go install
 
@@ -52,10 +70,11 @@ git aimit init
 
 You will be prompted for:
 
-| Setting | Default |
-|---------|---------|
-| Ollama base URL | `http://localhost:11434` |
-| Model name | `llama3` |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Ollama base URL | `http://localhost:11434` | HTTP endpoint of your Ollama instance |
+| Model name | `llama3` | Any model you have pulled locally |
+| Auto-stage | `N` | Run `git add -A` automatically before generating the message |
 
 The tool checks whether Ollama is reachable and saves the config to
 `~/.config/git-aimit/config.json`:
@@ -78,10 +97,10 @@ before generating the message, so you don't need to stage changes manually.
 
 ## Usage
 
-Stage your changes as usual, then run:
+Stage your changes and run:
 
 ```bash
-git add <files>
+git add <files>   # skip this if auto_stage is enabled
 git aimit
 ```
 
