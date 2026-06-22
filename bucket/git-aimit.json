@@ -1,18 +1,28 @@
 {
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "AI-powered Git commit message generator using local Ollama models",
     "homepage": "https://github.com/burakince/git-aimit",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/burakince/git-aimit/releases/download/v0.0.2/git-aimit-windows-amd64.exe",
-            "hash": "f68df0bfcba8f350bdb29cf7eafca0504c05515afe47d40d4de384be44b09fe6",
-            "bin": [["git-aimit-windows-amd64.exe", "git-aimit"]]
+            "url": "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-windows-amd64.exe",
+            "hash": "c341fd09c5233deefb840ce614111933c8d9a0a13e5f91b16b4bc9649e3127d8",
+            "bin": [
+                [
+                    "git-aimit-windows-amd64.exe",
+                    "git-aimit"
+                ]
+            ]
         },
         "arm64": {
-            "url": "https://github.com/burakince/git-aimit/releases/download/v0.0.2/git-aimit-windows-arm64.exe",
-            "hash": "2262f8052db58cd497f2cd6c6850868f323468710672da57ad55cb07afd573d5",
-            "bin": [["git-aimit-windows-arm64.exe", "git-aimit"]]
+            "url": "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-windows-arm64.exe",
+            "hash": "0022231b5640af5889367d9c3d8a3ae40a7c38e487fb92e9da75271ff605d41f",
+            "bin": [
+                [
+                    "git-aimit-windows-arm64.exe",
+                    "git-aimit"
+                ]
+            ]
         }
     },
     "notes": "Before first use, run the interactive setup:\n  git aimit init",
