@@ -42,14 +42,20 @@ func runInit(cmd *cobra.Command, args []string) error {
 		},
 	}
 
-	if err := config.Save(cfg); err != nil {
+	path, err := config.ConfigPath()
+	if err != nil {
+		return err
+	}
+
+	if err := config.SaveTo(path, cfg); err != nil {
 		return fmt.Errorf("saving config: %w", err)
 	}
 
+	fmt.Printf("Configuration saved to %s\n", path)
 	if autoStage {
-		fmt.Println("Configuration saved. Run `git aimit` to stage everything, generate a message, and commit.")
+		fmt.Println("Run `git aimit` to stage everything, generate a message, and commit.")
 	} else {
-		fmt.Println("Configuration saved. Run `git aimit` in a repository with staged changes.")
+		fmt.Println("Run `git aimit` in a repository with staged changes.")
 	}
 	return nil
 }

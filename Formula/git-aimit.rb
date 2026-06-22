@@ -12,6 +12,13 @@ class GitAimit < Formula
     system "go", "build", "-trimpath", "-ldflags", "-s -w", "-o", bin/"git-aimit", "."
   end
 
+  def caveats
+    <<~EOS
+      Before first use, run the interactive setup:
+        git aimit init
+    EOS
+  end
+
   test do
     assert_match "AI-powered Git commit message generator", shell_output("#{bin}/git-aimit --help")
   end
