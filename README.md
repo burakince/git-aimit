@@ -25,6 +25,7 @@ as `git-aimit`, Git exposes it as `git aimit`.
 
 ```bash
 brew tap burakince/git-aimit https://github.com/burakince/git-aimit
+brew trust burakince/git-aimit
 brew install git-aimit
 ```
 
