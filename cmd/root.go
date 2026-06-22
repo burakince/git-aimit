@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/burakince/git-aimit/internal/config"
 	"github.com/burakince/git-aimit/internal/git"
@@ -66,9 +67,16 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unknown provider %q -- check your config or run `git aimit init`", cfg.Provider)
 	}
 
-	fmt.Printf("Generating commit message using %s (%s)...\n", cfg.Provider, cfg.Ollama.Model)
-
+	stop := make(chan struct{})
+	stopped := make(chan struct{})
+	go func() {
+		spin(fmt.Sprintf("Generating with %s (%s)...", cfg.Provider, cfg.Ollama.Model), stop)
+		close(stopped)
+	}()
 	message, err := provider.GenerateCommitMessage(context.Background(), diff)
+	close(stop)
+	<-stopped // wait for spinner to clear its line before printing
+
 	if err != nil {
 		return err
 	}
@@ -91,4 +99,21 @@ func runRoot(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Committed successfully.")
 	return nil
+}
+
+func spin(label string, stop <-chan struct{}) {
+	frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	ticker := time.NewTicker(80 * time.Millisecond)
+	defer ticker.Stop()
+	i := 0
+	for {
+		select {
+		case <-stop:
+			fmt.Print("\r\033[K") // clear the spinner line
+			return
+		case <-ticker.C:
+			fmt.Printf("\r%s %s", frames[i%len(frames)], label)
+			i++
+		}
+	}
 }

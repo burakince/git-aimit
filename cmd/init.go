@@ -28,7 +28,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	baseURL := prompt(reader, "Ollama base URL", "http://localhost:11434")
-	model := prompt(reader, "Model name", "llama3")
+	model := prompt(reader, "Model name", "llama3.1")
 	autoStage := promptBool(reader, "Auto-stage all changes before generating message", false)
 
 	checkConnectivity(baseURL)

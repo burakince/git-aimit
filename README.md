@@ -89,7 +89,7 @@ You will be prompted for:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | Ollama base URL | `http://localhost:11434` | HTTP endpoint of your Ollama instance |
-| Model name | `llama3` | Any model you have pulled locally |
+| Model name | `llama3.1` | Any model you have pulled locally |
 | Auto-stage | `N` | Run `git add -A` automatically before generating the message |
 
 The tool checks whether Ollama is reachable and saves the config to
@@ -101,7 +101,7 @@ The tool checks whether Ollama is reachable and saves the config to
   "auto_stage": false,
   "ollama": {
     "base_url": "http://localhost:11434",
-    "model": "llama3"
+    "model": "llama3.1"
   }
 }
 ```
@@ -123,7 +123,7 @@ git aimit
 Example session:
 
 ```
-Generating commit message using ollama (llama3)...
+Generating with ollama (llama3.1)...
 
 Generated commit message:
 
