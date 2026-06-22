@@ -58,8 +58,8 @@ jobs:
         with:
           files: dist/*
 
-  update-homebrew:
-    name: Update Homebrew formula
+  update-manifests:
+    name: Update package manifests
     needs: release
     runs-on: ubuntu-latest
     steps:
@@ -77,8 +77,12 @@ jobs:
             sha=$(curl -sL "${BASE}/git-aimit-${target}" | sha256sum | awk '{print $1}')
             echo "${target}=${sha}" >> "$GITHUB_OUTPUT"
           done
+          for target in windows-amd64 windows-arm64; do
+            sha=$(curl -sL "${BASE}/git-aimit-${target}.exe" | sha256sum | awk '{print $1}')
+            echo "${target}=${sha}" >> "$GITHUB_OUTPUT"
+          done
 
-      - name: Patch formula
+      - name: Patch Homebrew formula
         env:
           TAG: ${{ github.ref_name }}
           SHA_DARWIN_ARM64: ${{ steps.shas.outputs.darwin-arm64 }}
@@ -120,10 +124,37 @@ jobs:
               f.write(txt)
           EOF
 
+      - name: Patch Scoop manifest
+        env:
+          TAG: ${{ github.ref_name }}
+          SHA_WINDOWS_AMD64: ${{ steps.shas.outputs.windows-amd64 }}
+          SHA_WINDOWS_ARM64: ${{ steps.shas.outputs.windows-arm64 }}
+        run: |
+          python3 - <<'EOF'
+          import os, json
+
+          tag     = os.environ["TAG"]
+          version = tag.lstrip("v")
+          base    = f"https://github.com/burakince/git-aimit/releases/download/{tag}"
+
+          with open("bucket/git-aimit.json") as f:
+              manifest = json.load(f)
+
+          manifest["version"] = version
+          manifest["architecture"]["64bit"]["url"]  = f"{base}/git-aimit-windows-amd64.exe"
+          manifest["architecture"]["64bit"]["hash"] = os.environ["SHA_WINDOWS_AMD64"]
+          manifest["architecture"]["arm64"]["url"]  = f"{base}/git-aimit-windows-arm64.exe"
+          manifest["architecture"]["arm64"]["hash"] = os.environ["SHA_WINDOWS_ARM64"]
+
+          with open("bucket/git-aimit.json", "w") as f:
+              json.dump(manifest, f, indent=4)
+              f.write("\n")
+          EOF
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/git-aimit.rb
-          git diff --staged --quiet || git commit -m "chore: update Homebrew formula to ${{ github.ref_name }}"
+          git add Formula/git-aimit.rb bucket/git-aimit.json
+          git diff --staged --quiet || git commit -m "chore: update package manifests to ${{ github.ref_name }}"
           git push

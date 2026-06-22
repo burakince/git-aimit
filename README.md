@@ -36,6 +36,20 @@ git aimit        # generate + commit
 git aimit init   # configure
 ```
 
+### Scoop (Windows)
+
+```powershell
+scoop bucket add git-aimit https://github.com/burakince/git-aimit
+scoop install git-aimit
+```
+
+After install, Git will recognise the binary as a subcommand:
+
+```powershell
+git aimit        # generate + commit
+git aimit init   # configure
+```
+
 ### Pre-built binaries
 
 Download the binary for your platform from the
