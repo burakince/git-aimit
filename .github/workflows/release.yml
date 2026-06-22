@@ -68,17 +68,62 @@ jobs:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update formula URL and SHA256
+      - name: Compute SHA256 for each pre-built binary
+        id: shas
         run: |
           TAG="${{ github.ref_name }}"
-          URL="https://github.com/burakince/git-aimit/archive/refs/tags/${TAG}.tar.gz"
-          SHA=$(curl -sL "$URL" | shasum -a 256 | awk '{print $1}')
+          BASE="https://github.com/burakince/git-aimit/releases/download/${TAG}"
+          for target in darwin-arm64 darwin-amd64 linux-arm64 linux-amd64; do
+            sha=$(curl -sL "${BASE}/git-aimit-${target}" | sha256sum | awk '{print $1}')
+            echo "${target}=${sha}" >> "$GITHUB_OUTPUT"
+          done
 
-          sed -i "s|  url \".*\"|  url \"${URL}\"|" Formula/git-aimit.rb
-          sed -i "s|  sha256 \".*\"|  sha256 \"${SHA}\"|" Formula/git-aimit.rb
+      - name: Patch formula
+        env:
+          TAG: ${{ github.ref_name }}
+          SHA_DARWIN_ARM64: ${{ steps.shas.outputs.darwin-arm64 }}
+          SHA_DARWIN_AMD64: ${{ steps.shas.outputs.darwin-amd64 }}
+          SHA_LINUX_ARM64:  ${{ steps.shas.outputs.linux-arm64 }}
+          SHA_LINUX_AMD64:  ${{ steps.shas.outputs.linux-amd64 }}
+        run: |
+          python3 - <<'EOF'
+          import os, re
 
+          tag     = os.environ["TAG"]
+          version = tag.lstrip("v")
+          base    = f"https://github.com/burakince/git-aimit/releases/download/{tag}"
+          shas = {
+              "darwin-arm64": os.environ["SHA_DARWIN_ARM64"],
+              "darwin-amd64": os.environ["SHA_DARWIN_AMD64"],
+              "linux-arm64":  os.environ["SHA_LINUX_ARM64"],
+              "linux-amd64":  os.environ["SHA_LINUX_AMD64"],
+          }
+
+          with open("Formula/git-aimit.rb") as f:
+              txt = f.read()
+
+          txt = re.sub(r'version "[^"]*"', f'version "{version}"', txt)
+
+          for target, sha in shas.items():
+              txt = re.sub(
+                  rf'(url ")[^"]*/git-aimit-{re.escape(target)}"',
+                  f'\\1{base}/git-aimit-{target}"',
+                  txt,
+              )
+              txt = re.sub(
+                  rf'(url "[^"]*git-aimit-{re.escape(target)}"\n\s*sha256 )"[^"]*"',
+                  f'\\1"{sha}"',
+                  txt,
+              )
+
+          with open("Formula/git-aimit.rb", "w") as f:
+              f.write(txt)
+          EOF
+
+      - name: Commit and push
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/git-aimit.rb
-          git diff --staged --quiet || git commit -m "chore: update Homebrew formula to ${TAG}"
+          git diff --staged --quiet || git commit -m "chore: update Homebrew formula to ${{ github.ref_name }}"
           git push

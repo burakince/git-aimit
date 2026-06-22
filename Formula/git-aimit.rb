@@ -1,15 +1,35 @@
 class GitAimit < Formula
   desc "AI-powered Git commit message generator using local Ollama models"
   homepage "https://github.com/burakince/git-aimit"
-  url "https://github.com/burakince/git-aimit/archive/refs/tags/v0.0.2.tar.gz"
-  sha256 "8e30ec9d12b0640bcf30f4c0f18c61d37f844d31a3a3f818ec4bb95f7e44456e"
+  version "0.0.1"
   license "MIT"
-  head "https://github.com/burakince/git-aimit.git", branch: "main"
 
-  depends_on "go" => :build
+  on_macos do
+    on_arm do
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.1/git-aimit-darwin-arm64"
+      sha256 "2f4368b21cecd42d69839f4a2e510cde8e8f7abe6bbcd51293075dcff2bc233f"
+    end
+    on_intel do
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.1/git-aimit-darwin-amd64"
+      sha256 "3434a104de13c7280d155a6ffb7985359cee562ee5ef5e256e584703e5d453a3"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.1/git-aimit-linux-arm64"
+      sha256 "9b38b6de9017e4e7a1a3495ea48092f3f0b5e77a59ac9aeb79877ee169bee17f"
+    end
+    on_intel do
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.1/git-aimit-linux-amd64"
+      sha256 "e1cbec354db184cef06a13ded5fb27a7fe4b5a1a941878b76854f14653ef787a"
+    end
+  end
 
   def install
-    system "go", "build", "-trimpath", "-ldflags", "-s -w", "-o", bin/"git-aimit", "."
+    os   = OS.mac? ? "darwin" : "linux"
+    arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+    bin.install "git-aimit-#{os}-#{arch}" => "git-aimit"
   end
 
   def caveats
