@@ -19,6 +19,15 @@ as `git-aimit`, Git exposes it as `git aimit`.
 
 ## Installation
 
+### Homebrew (macOS and Linux)
+
+```bash
+brew tap burakince/git-aimit https://github.com/burakince/git-aimit
+brew install git-aimit
+```
+
+### Go install
+
 ```bash
 go install github.com/burakince/git-aimit@latest
 ```

@@ -57,3 +57,28 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           files: dist/*
+
+  update-homebrew:
+    name: Update Homebrew formula
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update formula URL and SHA256
+        run: |
+          TAG="${{ github.ref_name }}"
+          URL="https://github.com/burakince/git-aimit/archive/refs/tags/${TAG}.tar.gz"
+          SHA=$(curl -sL "$URL" | shasum -a 256 | awk '{print $1}')
+
+          sed -i "s|  url \".*\"|  url \"${URL}\"|" Formula/git-aimit.rb
+          sed -i "s|  sha256 \".*\"|  sha256 \"${SHA}\"|" Formula/git-aimit.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/git-aimit.rb
+          git diff --staged --quiet || git commit -m "chore: update Homebrew formula to ${TAG}"
+          git push
