@@ -28,6 +28,13 @@ brew tap burakince/git-aimit https://github.com/burakince/git-aimit
 brew install git-aimit
 ```
 
+Once installed, Git will recognise the binary as a subcommand:
+
+```bash
+git aimit        # generate + commit
+git aimit init   # configure
+```
+
 ### Pre-built binaries
 
 Download the binary for your platform from the
@@ -50,13 +57,7 @@ Available targets: `linux-amd64`, `linux-arm64`, `darwin-amd64`, `darwin-arm64`,
 go install github.com/burakince/git-aimit@latest
 ```
 
-Make sure `$(go env GOPATH)/bin` is in your `PATH`. Once it is, Git will
-recognise the binary as a subcommand:
-
-```bash
-git aimit        # generate + commit
-git aimit init   # configure
-```
+Make sure `$(go env GOPATH)/bin` is in your `PATH`.
 
 ---
 
