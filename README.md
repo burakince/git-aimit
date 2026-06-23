@@ -13,7 +13,9 @@ as `git-aimit`, Git exposes it as `git aimit`.
 2. Reads `git diff --cached` (staged changes only).
 3. Sends the diff to a locally running Ollama model with a Conventional Commits
    prompt. Includes an explanatory body paragraph when the diff spans multiple
-   packages or bounded contexts.
+   packages or bounded contexts. If the repo has a commit template configured,
+   its content is injected into the prompt so the generated message follows the
+   repo's format conventions.
 4. Prints the generated message for you to review.
 5. Asks for confirmation — if you say **y**, it runs `git commit -m <message>`.
 
@@ -92,6 +94,12 @@ You will be prompted for:
 | Model name | `llama3.1` | Any model you have pulled locally |
 | Auto-stage | `N` | Run `git add -A` automatically before generating the message |
 
+After answering the prompts, `init` also auto-detects the repository's commit
+template. It checks `git config commit.template` first, then looks for common
+filenames (`.gitmessage`, `.git-commit-template`, `.commit-template`) in the
+working directory. The detected path is stored in config so subsequent runs can
+load the template and include it in the prompt.
+
 The tool checks whether Ollama is reachable and saves the config to
 `~/.config/git-aimit/config.json`:
 
@@ -99,6 +107,7 @@ The tool checks whether Ollama is reachable and saves the config to
 {
   "provider": "ollama",
   "auto_stage": false,
+  "commit_template": ".gitmessage",
   "ollama": {
     "base_url": "http://localhost:11434",
     "model": "llama3.1"
@@ -106,6 +115,8 @@ The tool checks whether Ollama is reachable and saves the config to
 }
 ```
 
+`commit_template` is the path to the repo's commit template file. It is set
+automatically by `git aimit init` and left empty when no template is found.
 Set `auto_stage` to `true` to have `git aimit` run `git add -A` automatically
 before generating the message, so you don't need to stage changes manually.
 

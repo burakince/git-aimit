@@ -12,8 +12,10 @@ func TestSaveAndLoad(t *testing.T) {
 	path := filepath.Join(dir, "config.json")
 
 	want := &Config{
-		Provider:  "ollama",
-		AutoStage: true,
+		ConfigVersion:  CurrentConfigVersion,
+		Provider:       "ollama",
+		AutoStage:      true,
+		CommitTemplate: "/repo/.gitmessage",
 		Ollama: OllamaConfig{
 			BaseURL: "http://localhost:11434",
 			Model:   "llama3",
@@ -40,6 +42,69 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 	if got.Ollama.Model != want.Ollama.Model {
 		t.Errorf("Ollama.Model: got %q, want %q", got.Ollama.Model, want.Ollama.Model)
+	}
+	if got.CommitTemplate != want.CommitTemplate {
+		t.Errorf("CommitTemplate: got %q, want %q", got.CommitTemplate, want.CommitTemplate)
+	}
+	if got.ConfigVersion != want.ConfigVersion {
+		t.Errorf("ConfigVersion: got %d, want %d", got.ConfigVersion, want.ConfigVersion)
+	}
+}
+
+func TestWriteDefaultTemplate(t *testing.T) {
+	dir := t.TempDir()
+
+	path, err := WriteDefaultTemplate(dir)
+	if err != nil {
+		t.Fatalf("WriteDefaultTemplate: %v", err)
+	}
+	if path == "" {
+		t.Fatal("expected non-empty path")
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading template: %v", err)
+	}
+	if len(content) == 0 {
+		t.Error("default template file should not be empty")
+	}
+
+	// Second call must not overwrite the file.
+	if err := os.WriteFile(path, []byte("custom"), 0o644); err != nil {
+		t.Fatalf("writing custom content: %v", err)
+	}
+	if _, err := WriteDefaultTemplate(dir); err != nil {
+		t.Fatalf("second WriteDefaultTemplate: %v", err)
+	}
+	preserved, _ := os.ReadFile(path)
+	if string(preserved) != "custom" {
+		t.Error("WriteDefaultTemplate should not overwrite an existing template file")
+	}
+}
+
+func TestLoadOutdatedConfig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+
+	old := &Config{
+		ConfigVersion: 0,
+		Provider:      "ollama",
+		Ollama:        OllamaConfig{BaseURL: "http://localhost:11434", Model: "llama3"},
+	}
+	if err := SaveTo(path, old); err != nil {
+		t.Fatalf("SaveTo: %v", err)
+	}
+
+	got, err := LoadFrom(path)
+	if err != nil {
+		t.Fatalf("LoadFrom: %v", err)
+	}
+	if got.ConfigVersion != 0 {
+		t.Errorf("expected ConfigVersion 0 for outdated config, got %d", got.ConfigVersion)
+	}
+	if got.ConfigVersion >= CurrentConfigVersion {
+		t.Errorf("outdated config should have ConfigVersion < %d, got %d", CurrentConfigVersion, got.ConfigVersion)
 	}
 }
 

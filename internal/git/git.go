@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -27,6 +28,23 @@ func StageAll() error {
 		return fmt.Errorf("git add -A failed: %s", strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+// FindCommitTemplate returns the path of the repository's commit template, or "" if none is found.
+// It first checks `git config commit.template`, then falls back to common filenames in the working directory.
+func FindCommitTemplate() string {
+	out, err := exec.Command("git", "config", "commit.template").Output()
+	if err == nil {
+		if p := strings.TrimSpace(string(out)); p != "" {
+			return p
+		}
+	}
+	for _, name := range []string{".gitmessage", ".git-commit-template", ".commit-template"} {
+		if _, err := os.Stat(name); err == nil {
+			return name
+		}
+	}
+	return ""
 }
 
 // Commit creates a commit with the given message.

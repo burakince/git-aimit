@@ -37,14 +37,15 @@ OLLAMA_BASE_URL=http://localhost:11434 OLLAMA_MODEL=llama3 go test -tags evals -
 2. `internal/config` — loads `~/.config/git-aimit/config.json` (errors here before touching git)
 3. `internal/git` — if `cfg.AutoStage` is true, runs `git add -A` before reading the diff
 4. `internal/git` — runs `git diff --cached`; exits cleanly if nothing is staged
-5. `internal/llm` — calls the configured provider, prints the message, asks for confirmation
-6. `internal/git` — runs `git commit -m <message>` if confirmed
+5. `os` — if `cfg.CommitTemplate` is set, reads the template file content (silently ignored if unreadable)
+6. `internal/llm` — calls the configured provider (with template content baked in), prints the message, asks for confirmation
+7. `internal/git` — runs `git commit -m <message>` if confirmed
 
 **Provider interface (`internal/llm/provider.go`)** is the extension point for new LLM backends. The root command (`cmd/root.go`) holds a `llm.Provider` variable; adding a new backend only requires a new package under `internal/llm/<name>/` and a new `case` in the `switch cfg.Provider` block.
 
-**Config (`internal/config/config.go`):** viper reads the JSON file; `encoding/json` writes it. `LoadFrom(path)` and `SaveTo(path, cfg)` accept explicit paths so tests use temp directories instead of `~/.config`. Fields: `provider`, `auto_stage` (bool, default false), `ollama.base_url`, `ollama.model`.
+**Config (`internal/config/config.go`):** viper reads the JSON file; `encoding/json` writes it. `LoadFrom(path)` and `SaveTo(path, cfg)` accept explicit paths so tests use temp directories instead of `~/.config`. Fields: `provider`, `auto_stage` (bool, default false), `commit_template` (string, path to repo commit template file), `ollama.base_url`, `ollama.model`.
 
-**Ollama client (`internal/llm/ollama/ollama.go`):** streams NDJSON from `POST /api/generate`, accumulating `response` tokens until `done: true`. `BuildPrompt` is a pure exported function for testability. `ollamaError` reads the JSON error body and surfaces actionable messages (e.g. suggests `ollama pull` on 404). The system prompt requires a body paragraph when the diff touches multiple bounded contexts.
+**Ollama client (`internal/llm/ollama/ollama.go`):** streams NDJSON from `POST /api/generate`, accumulating `response` tokens until `done: true`. `BuildPrompt(diff, commitTemplate string)` is a pure exported function for testability; when `commitTemplate` is non-empty it injects a `## Commit template` section into the user prompt so the model follows the repo's format. `ollamaError` reads the JSON error body and surfaces actionable messages (e.g. suggests `ollama pull` on 404). The system prompt requires a body paragraph when the diff touches multiple bounded contexts. `New(baseURL, model, commitTemplate string)` stores the template content on the `Client` struct; the root command reads the template file and passes its content at construction time.
 
 **Testing approach:** Unit tests use `net/http/httptest` — no mocking libraries. `BuildPrompt` is a pure exported function specifically to enable network-free unit tests.
 

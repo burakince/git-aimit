@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/burakince/git-aimit/internal/config"
+	"github.com/burakince/git-aimit/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -27,24 +29,51 @@ func init() {
 func runInit(cmd *cobra.Command, args []string) error {
 	reader := bufio.NewReader(os.Stdin)
 
+	path, err := config.ConfigPath()
+	if err != nil {
+		return err
+	}
+	configDir := filepath.Dir(path)
+
 	baseURL := prompt(reader, "Ollama base URL", "http://localhost:11434")
 	model := prompt(reader, "Model name", "llama3.1")
+	checkConnectivity(baseURL)
 	autoStage := promptBool(reader, "Auto-stage all changes before generating message", false)
 
-	checkConnectivity(baseURL)
+	commitTemplate := git.FindCommitTemplate()
+	if commitTemplate != "" {
+		fmt.Printf("Found commit template: %s\n", commitTemplate)
+		if !promptBool(reader, "Use this commit template", true) {
+			commitTemplate = ""
+		}
+	}
+
+	if commitTemplate == "" {
+		if promptBool(reader, "Use built-in best-practices commit template", true) {
+			p, werr := config.WriteDefaultTemplate(configDir)
+			if werr != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not write default template: %v\n", werr)
+			} else {
+				commitTemplate = p
+				fmt.Printf("Default commit template written to %s\n", p)
+			}
+		} else {
+			commitTemplate = prompt(reader, "Commit template path", "")
+			if commitTemplate != "" {
+				checkTemplatePath(commitTemplate)
+			}
+		}
+	}
 
 	cfg := &config.Config{
-		Provider:  "ollama",
-		AutoStage: autoStage,
+		ConfigVersion:  config.CurrentConfigVersion,
+		Provider:       "ollama",
+		AutoStage:      autoStage,
+		CommitTemplate: commitTemplate,
 		Ollama: config.OllamaConfig{
 			BaseURL: baseURL,
 			Model:   model,
 		},
-	}
-
-	path, err := config.ConfigPath()
-	if err != nil {
-		return err
 	}
 
 	if err := config.SaveTo(path, cfg); err != nil {
@@ -82,6 +111,12 @@ func promptBool(r *bufio.Reader, label string, defaultVal bool) bool {
 		return defaultVal
 	}
 	return line == "y" || line == "yes"
+}
+
+func checkTemplatePath(path string) {
+	if _, err := os.Stat(path); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: commit template not found at %s -- verify the path.\n", path)
+	}
 }
 
 func checkConnectivity(baseURL string) {

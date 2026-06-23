@@ -9,15 +9,21 @@ import (
 	"github.com/spf13/viper"
 )
 
+// CurrentConfigVersion is incremented whenever new required fields are added to Config.
+// Loaded configs with a lower version are considered outdated.
+const CurrentConfigVersion = 1
+
 type OllamaConfig struct {
 	BaseURL string `json:"base_url" mapstructure:"base_url"`
 	Model   string `json:"model"    mapstructure:"model"`
 }
 
 type Config struct {
-	Provider  string       `json:"provider"   mapstructure:"provider"`
-	AutoStage bool         `json:"auto_stage" mapstructure:"auto_stage"`
-	Ollama    OllamaConfig `json:"ollama"     mapstructure:"ollama"`
+	ConfigVersion  int          `json:"config_version"   mapstructure:"config_version"`
+	Provider       string       `json:"provider"         mapstructure:"provider"`
+	AutoStage      bool         `json:"auto_stage"       mapstructure:"auto_stage"`
+	CommitTemplate string       `json:"commit_template"  mapstructure:"commit_template"`
+	Ollama         OllamaConfig `json:"ollama"           mapstructure:"ollama"`
 }
 
 // ConfigPath returns the absolute path to the config file.

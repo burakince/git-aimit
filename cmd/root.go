@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version = "dev"
+
 var rootCmd = &cobra.Command{
 	Use:   "git-aimit",
 	Short: "AI-powered Git commit message generator",
@@ -22,6 +24,7 @@ var rootCmd = &cobra.Command{
 a Conventional Commits message, then optionally commits for you.
 
 Install it to PATH as "git-aimit" and Git will expose it as "git aimit".`,
+	Version:      version,
 	RunE:         runRoot,
 	SilenceUsage: true,
 }
@@ -42,6 +45,9 @@ func runRoot(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	if cfg.ConfigVersion < config.CurrentConfigVersion {
+		fmt.Fprintln(os.Stderr, "Warning: your git-aimit config is outdated. Run `git aimit init` to update it.")
+	}
 
 	if cfg.AutoStage {
 		fmt.Println("Auto-staging all changes...")
@@ -59,10 +65,17 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	var templateContent string
+	if cfg.CommitTemplate != "" {
+		if b, err := os.ReadFile(cfg.CommitTemplate); err == nil {
+			templateContent = strings.TrimSpace(string(b))
+		}
+	}
+
 	var provider llm.Provider
 	switch cfg.Provider {
 	case "ollama", "":
-		provider = ollama.New(cfg.Ollama.BaseURL, cfg.Ollama.Model)
+		provider = ollama.New(cfg.Ollama.BaseURL, cfg.Ollama.Model, templateContent)
 	default:
 		return fmt.Errorf("unknown provider %q -- check your config or run `git aimit init`", cfg.Provider)
 	}

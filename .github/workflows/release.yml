@@ -36,7 +36,8 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: "0"
         run: |
-          go build -trimpath -ldflags="-s -w" \
+          go build -trimpath \
+            -ldflags="-s -w -X github.com/burakince/git-aimit/cmd.version=${{ github.ref_name }}" \
             -o dist/git-aimit-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
 
       - uses: actions/upload-artifact@v7

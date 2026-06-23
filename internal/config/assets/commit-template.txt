@@ -1,0 +1,5 @@
+{type}({scope}): {subject}
+
+{Explain WHY this change was made — the motivation, constraint, or trade-off.
+Include a body when multiple packages are affected or the motivation is
+non-obvious. Separate from subject with a blank line. Wrap at 72 chars.}
