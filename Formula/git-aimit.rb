@@ -1,28 +1,28 @@
 class GitAimit < Formula
   desc "AI-powered Git commit message generator using local Ollama models"
   homepage "https://github.com/burakince/git-aimit"
-  version "0.0.3"
+  version "0.0.4"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-darwin-arm64"
-      sha256 "7dcd79e95ad3adcee6a39718d92c3eeaaf4107b8a90bcbadf2bef9c0a919aae0"
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.4/git-aimit-darwin-arm64"
+      sha256 "6ddab81ad8dc1f40d2ec70f819f5f0844ce57d2573604f33e9264f52aa68c286"
     end
     on_intel do
-      url "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-darwin-amd64"
-      sha256 "911854b6cf7bd5e7e0ffaadb5101ac8dd7cb13694124ab8867734e96970fb5b9"
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.4/git-aimit-darwin-amd64"
+      sha256 "5743de3e6036976295d78db46f67c82bad4c9174c6352c1df8122e599d2c4190"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-linux-arm64"
-      sha256 "b28629cb2ae0091ba8711ca8a92899e22e4206ce90b31cd59b1ab374b34b4f7a"
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.4/git-aimit-linux-arm64"
+      sha256 "083f5c15a4c78dd465c8568cba6c1eb48e9aaf626890b4393ccb1769857fda61"
     end
     on_intel do
-      url "https://github.com/burakince/git-aimit/releases/download/v0.0.3/git-aimit-linux-amd64"
-      sha256 "262cfe4638560286f3aa83043d3acef284a3744c7b88d2ddaae9fa6bbcd46685"
+      url "https://github.com/burakince/git-aimit/releases/download/v0.0.4/git-aimit-linux-amd64"
+      sha256 "67e710a2815d73a58c943cb31ec3abcf03f8d82c76c11a1e1e9d932cf4c5aaf5"
     end
   end
 
