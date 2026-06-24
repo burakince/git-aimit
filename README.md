@@ -11,11 +11,11 @@ as `git-aimit`, Git exposes it as `git aimit`.
 
 1. Optionally runs `git add -A` for you when `auto_stage` is enabled in config.
 2. Reads `git diff --cached` (staged changes only).
-3. Sends the diff to a locally running Ollama model with a Conventional Commits
-   prompt. Includes an explanatory body paragraph when the diff spans multiple
-   packages or bounded contexts. If the repo has a commit template configured,
-   its content is injected into the prompt so the generated message follows the
-   repo's format conventions.
+3. Extracts the changed file paths and sends them together with the diff to a
+   locally running Ollama model. The model classifies each file (blog post,
+   code, config) and derives the commit subject accordingly. If the repo has a
+   commit template configured, its content is injected into the prompt so the
+   generated message follows the repo's format conventions.
 4. Prints the generated message for you to review.
 5. Asks for confirmation — if you say **y**, it runs `git commit -m <message>`.
 
@@ -36,6 +36,7 @@ Once installed, Git will recognise the binary as a subcommand:
 ```bash
 git aimit        # generate + commit
 git aimit init   # configure
+git aimit --version
 ```
 
 ### Scoop (Windows)
@@ -50,6 +51,7 @@ After install, Git will recognise the binary as a subcommand:
 ```powershell
 git aimit        # generate + commit
 git aimit init   # configure
+git aimit --version
 ```
 
 ### Pre-built binaries
@@ -86,28 +88,34 @@ Run the interactive setup once before first use:
 git aimit init
 ```
 
-You will be prompted for:
+The wizard prompts for:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | Ollama base URL | `http://localhost:11434` | HTTP endpoint of your Ollama instance |
 | Model name | `llama3.1` | Any model you have pulled locally |
 | Auto-stage | `N` | Run `git add -A` automatically before generating the message |
+| Commit template | built-in | Path to a commit message template; `init` auto-detects the repo's template, or offers the built-in best-practices default |
 
-After answering the prompts, `init` also auto-detects the repository's commit
-template. It checks `git config commit.template` first, then looks for common
-filenames (`.gitmessage`, `.git-commit-template`, `.commit-template`) in the
-working directory. The detected path is stored in config so subsequent runs can
-load the template and include it in the prompt.
+`init` discovers an existing commit template by checking `git config commit.template`
+first, then looking for common filenames (`.gitmessage`, `.git-commit-template`,
+`.commit-template`) in the working directory. If none is found it offers to write
+a built-in Conventional Commits template to
+`~/.config/git-aimit/commit-template.txt`. You can also provide a custom path,
+or skip the template entirely.
+
+If you run `git aimit` and see a warning about an outdated config, re-run
+`git aimit init` to pick up new settings.
 
 The tool checks whether Ollama is reachable and saves the config to
 `~/.config/git-aimit/config.json`:
 
 ```json
 {
+  "config_version": 1,
   "provider": "ollama",
   "auto_stage": false,
-  "commit_template": ".gitmessage",
+  "commit_template": "~/.config/git-aimit/commit-template.txt",
   "ollama": {
     "base_url": "http://localhost:11434",
     "model": "llama3.1"
@@ -115,10 +123,9 @@ The tool checks whether Ollama is reachable and saves the config to
 }
 ```
 
-`commit_template` is the path to the repo's commit template file. It is set
-automatically by `git aimit init` and left empty when no template is found.
-Set `auto_stage` to `true` to have `git aimit` run `git add -A` automatically
-before generating the message, so you don't need to stage changes manually.
+`commit_template` is the path to the commit template file whose content is
+injected into the prompt on every run. Set `auto_stage` to `true` to have
+`git aimit` run `git add -A` automatically before generating the message.
 
 ---
 
@@ -168,7 +175,7 @@ go test ./...
 
 # Run a specific test
 go test ./internal/config/... -run TestSaveAndLoad
-go test ./internal/llm/ollama/... -run TestGenerateCommitMessage
+go test ./internal/llm/ollama/... -run TestBuildPrompt
 
 # Vet
 go vet ./...
@@ -222,4 +229,4 @@ type Provider interface {
 
 - Go 1.21+
 - [Ollama](https://ollama.com/) running locally with at least one model pulled
-  (`ollama pull llama3`)
+  (`ollama pull llama3.1`)
