@@ -145,6 +145,7 @@ func TestSystemPromptHasExamples(t *testing.T) {
 		"Input:",
 		"Output:",
 		"docs:",
+		"feat(auth):",
 		"fix(auth):",
 		"feat(config):",
 		"<commit_template>",
@@ -153,6 +154,12 @@ func TestSystemPromptHasExamples(t *testing.T) {
 		if !strings.Contains(systemPrompt, phrase) {
 			t.Errorf("system prompt should contain example with %q", phrase)
 		}
+	}
+}
+
+func TestSystemPromptHasNobodyExample(t *testing.T) {
+	if !strings.Contains(systemPrompt, "propagate token subject through request context") {
+		t.Error("system prompt should include a single-file no-body example")
 	}
 }
 
